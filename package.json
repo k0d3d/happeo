@@ -1,0 +1,21 @@
+{
+  "name": "happeo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "parcel build index.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "jest": "^27.0.6",
+    "parcel-bundler": "^1.12.5"
+  }
+}

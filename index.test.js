@@ -17,6 +17,7 @@ describe('batch file request within 500 sec', () => {
       ids: ["fileid3"]
     }})
 
+
     const [case1, case2, case3] = await Promise.all([case1Req, case2Req, case3Req])
 
     expect(case1).to.eql({items: [{id:"fileid1"},{id:"fileid2"}]})
@@ -26,7 +27,4 @@ describe('batch file request within 500 sec', () => {
 
   })
 
-  test('is batched and sent at once after 1sec', async () => {
-    expect(apiClient.requestSent).to.eql(3)
-  })
 })

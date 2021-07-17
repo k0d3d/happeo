@@ -1,32 +1,28 @@
 const apiClient = require('./common')
 const expect = require('chai').expect
 
-jest.setTimeout(10000)
+jest.setTimeout(15000)
 
 describe('batch file request within 500 sec', () => {
-  test(`// Should return [{id:”fileid1”},{id:”fileid2”}]`, async () => {
-
-    const {data} = await apiClient.get('/file-batch-api', {params: {
+  test(`// Should send request only once`, async () => {
+    const case1Req = apiClient.get('/file-batch-api', {params: {
       ids: ["fileid1", "fileid2"]
     }})
-    expect(data).to.eql({items: [{id:"fileid1"},{id:"fileid2"}]})
 
-  })
-  test(`// Should return [{id:”fileid2”}]`, async () => {
-
-    const {data} = await apiClient.get('/file-batch-api', {params: {
+    const case2Req = apiClient.get('/file-batch-api', {params: {
       ids: ["fileid2"]
     }})
-    expect(data).to.eql({items: [{id:"fileid2"}]})
 
-  })
-  test(`// Should return empty for [{id:”fileid3”}]`, async () => {
-
-    const {data} = await apiClient.get('/file-batch-api', {params: {
+    const case3Req = apiClient.get('/file-batch-api', {params: {
       ids: ["fileid3"]
     }})
-    expect(data).to.not.eql({items: [{id:"fileid3"}]})
-    expect(data).to.eql({items: []})
+
+    const [case1, case2, case3] = await Promise.all([case1Req, case2Req, case3Req])
+
+    expect(case1).to.eql({items: [{id:"fileid1"},{id:"fileid2"}]})
+    expect(case2).to.eql({items: [{id:"fileid2"}]})
+    expect(case3).to.not.eql({items: [{id:"fileid3"}]})
+    expect(case3).to.eql({items: []})
 
   })
 

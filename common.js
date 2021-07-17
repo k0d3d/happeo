@@ -1,47 +1,57 @@
 const axios = require("axios");
 
 let currentRequests = [];
-let unresolvedQueue = []
+let unresolvedQueue = [];
 let batchedIds = [];
 const MAX_REQUEST_COUNT = 3;
 
-const baseURL =  "https://europe-west1-quickstart-1573558070219.cloudfunctions.net";
+const baseURL =
+"https://europe-west1-quickstart-1573558070219.cloudfunctions.net";
+
+const axiosAltInstance = axios.create({ baseURL })
+
 axios.defaults.baseURL = baseURL;
 
-
+let interval
 
 axios.interceptors.request.use(
   function (config) {
-    // Do something before request is sent
-    // console.log(config.params)
-    if (config.url !== '/file-batch-api') return Promise.resolve(config)
     return new Promise((resolve, reject) => {
-      // currentRequests.push()
       currentRequests = [...currentRequests, ...config.params.ids];
-      if (currentRequests.length === MAX_REQUEST_COUNT) {
-        // reset file count
-        config.params = {
-          ids: currentRequests,
-        };
-        // let batchInstance = axios.create({baseURL})
-        // batchInstance.get(config.url, {
-        //   params: {
-        //     ids: currentRequests,
-        //   },
-        // })
-        // .then(axiosRes => {
-        //   resolve(axiosRes.config)
-        // })
-        // .catch(error => reject(error))
+      interval = interval || setInterval(function () {
+        clearInterval(interval);
+        axiosAltInstance
+          .get('/file-batch-api', {
+            params: {
+              ids: currentRequests,
+            },
+          })
+          // .then(response => console.log(response.data))
+          .then((response) => {
+            return resolve(response.data)
+            unresolvedQueue.forEach((paramStr) => {
+              reject({
+                isQueuedItem: true
+              })
+              // console.log(Object.keys(paramStr)[0]);
+              // const { resolve, reject } = Object.values(paramStr)[0];
+              // resolve({
+              //   items: Object.keys(paramStr)[0]
+              //     .split("-")
+              //     .map((item) =>
+              //       response.data.items.find((respItem) => respItem.id === item)
+              //     ),
+              // });
+            });
+            unresolvedQueue = [];
+            currentRequests = [];
+          });
+      }, 1000);
 
-        resolve(config)
-
-      } else {
-        config.ADDED_TO_QUEUE = true
-        reject(config)
-      }
+      unresolvedQueue.push({
+        [config.params.ids.join("-")]: { resolve, reject },
+      });
     });
-    // return Promise.resolve(config);
   },
   function (error) {
     return Promise.reject(error);
@@ -50,34 +60,20 @@ axios.interceptors.request.use(
 
 axios.interceptors.response.use(
   function (response) {
+    console.log("response should be ", response);
+    return response;
 
-    console.log('response should be ', response.statusText)
-    unresolvedQueue.forEach(({resolve, reject}) => {
-      console.log(`item`)
-      resolve(response)
-    })
-    unresolvedQueue = []
-    currentRequests = [];
-    return Promise.resolve(response);
-    return new Promise ((resolve, reject) => {
-      console.log('response should be ', response.statusText)
-
-      batchInstance
-      .then(response => {
-        resolve(response.config)
-      }, error => reject(error))
-    })
-
-
-    if (response.config.ADDED_TO_QUEUE) {
-    }
+    return Promise.resolve({
+      items:
+        response.data.items.find((respItem) => respItem.id === lastItem) || [],
+    });
   },
   (error) => {
-    const unresolvedItem = new Promise((resolve, reject) => {
-      // resolve([])
-      unresolvedQueue.push({resolve, reject})
+    console.log(error)
+    // return Promise.resolve(error)
+    return new Promise((resolve, reject) => {
+      resolve(error)
     })
-    return unresolvedItem
   }
 );
 
